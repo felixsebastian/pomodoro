@@ -1,13 +1,29 @@
 import { Play, Pause, RotateCcw, Settings } from 'lucide-react'
-import { useTimer, usePomodoroCycle, useNotifications } from './hooks'
+import { useState } from 'react'
+import { useTimer, usePomodoroCycle, useNotifications, useSettings, useAutoRollover } from './hooks'
 import type { TimerMode } from './hooks'
+import SettingsPanel from './components/SettingsPanel'
+import TransitionOverlay from './components/TransitionOverlay'
 
 function App() {
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false)
+  const [nextMode, setNextMode] = useState<TimerMode>('work')
+  
+  const { settings, updateSettings, resetToDefaults, isLoading } = useSettings()
   const { playNotificationSound, showNotification, requestNotificationPermission } = useNotifications()
   
   const pomodoroCycle = usePomodoroCycle({
+    durations: settings.durations,
     onModeChange: (mode, duration) => {
       timer.setTime(duration)
+      setNextMode(mode)
+    }
+  })
+
+  const autoRollover = useAutoRollover({
+    enabled: settings.autoStart,
+    onComplete: () => {
+      timer.start()
     }
   })
 
@@ -15,9 +31,31 @@ function App() {
     initialTime: pomodoroCycle.getCurrentDuration(),
     onComplete: () => {
       // Handle timer completion
-      playNotificationSound()
-      showNotification(pomodoroCycle.currentMode)
+      if (settings.soundEnabled) {
+        playNotificationSound()
+      }
+      if (settings.notificationsEnabled) {
+        showNotification(pomodoroCycle.currentMode)
+      }
+      
+      // Get the next mode before completing the session
+      const currentMode = pomodoroCycle.currentMode
+      let nextSessionMode: TimerMode = 'work'
+      
+      if (currentMode === 'work') {
+        const nextSessionsCompleted = pomodoroCycle.workSessionsCompleted + 1
+        nextSessionMode = nextSessionsCompleted % 4 === 0 ? 'longBreak' : 'shortBreak'
+      } else {
+        nextSessionMode = 'work'
+      }
+      
+      setNextMode(nextSessionMode)
       pomodoroCycle.completeCurrentSession()
+      
+      // Start auto-rollover if enabled
+      if (settings.autoStart) {
+        autoRollover.startTransition()
+      }
     }
   })
 
@@ -42,10 +80,28 @@ function App() {
 
   const handleReset = () => {
     timer.reset()
+    autoRollover.cancelTransition()
   }
 
   const handleModeSwitch = (mode: TimerMode) => {
+    autoRollover.cancelTransition()
     pomodoroCycle.switchMode(mode)
+  }
+
+  const handleSettingsOpen = () => {
+    setIsSettingsOpen(true)
+  }
+
+  const handleSettingsClose = () => {
+    setIsSettingsOpen(false)
+  }
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+        <div className="text-gray-600">Loading...</div>
+      </div>
+    )
   }
 
   const modeConfig = {
@@ -84,6 +140,11 @@ function App() {
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-gray-800 mb-2">Pomodoro</h1>
           <p className="text-gray-600 text-lg">Stay focused, stay productive</p>
+          {settings.autoStart && (
+            <p className="text-sm text-gray-500 mt-1">
+              Auto-start enabled • Sessions will start automatically
+            </p>
+          )}
         </div>
 
         {/* Main Timer Card */}
@@ -147,19 +208,25 @@ function App() {
           <div className="flex justify-center space-x-4 mb-6">
             <button
               onClick={timer.isRunning ? timer.pause : handleStart}
-              className={`bg-gradient-to-r ${config.buttonGradient} text-white p-4 rounded-full shadow-lg transform transition-all duration-200 hover:scale-105 active:scale-95`}
+              disabled={autoRollover.isInTransition}
+              className={`bg-gradient-to-r ${config.buttonGradient} text-white p-4 rounded-full shadow-lg transform transition-all duration-200 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100`}
             >
               {timer.isRunning ? <Pause size={24} /> : <Play size={24} />}
             </button>
             
             <button
               onClick={handleReset}
-              className="bg-gray-200 hover:bg-gray-300 text-gray-700 p-4 rounded-full shadow-lg transform transition-all duration-200 hover:scale-105 active:scale-95"
+              disabled={autoRollover.isInTransition}
+              className="bg-gray-200 hover:bg-gray-300 text-gray-700 p-4 rounded-full shadow-lg transform transition-all duration-200 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
             >
               <RotateCcw size={24} />
             </button>
             
-            <button className="bg-gray-200 hover:bg-gray-300 text-gray-700 p-4 rounded-full shadow-lg transform transition-all duration-200 hover:scale-105 active:scale-95">
+            <button 
+              onClick={handleSettingsOpen}
+              disabled={autoRollover.isInTransition}
+              className="bg-gray-200 hover:bg-gray-300 text-gray-700 p-4 rounded-full shadow-lg transform transition-all duration-200 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+            >
               <Settings size={24} />
             </button>
           </div>
@@ -186,30 +253,30 @@ function App() {
           <div className="flex justify-center space-x-2">
             <button
               onClick={() => handleModeSwitch('work')}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors duration-200 border-2 ${
                 pomodoroCycle.currentMode === 'work'
-                  ? 'bg-red-100 text-red-700 border-2 border-red-200'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  ? 'bg-red-100 text-red-700 border-red-200'
+                  : 'bg-gray-100 text-gray-600 border-transparent hover:bg-gray-200'
               }`}
             >
               Work
             </button>
             <button
               onClick={() => handleModeSwitch('shortBreak')}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors duration-200 border-2 ${
                 pomodoroCycle.currentMode === 'shortBreak'
-                  ? 'bg-green-100 text-green-700 border-2 border-green-200'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  ? 'bg-green-100 text-green-700 border-green-200'
+                  : 'bg-gray-100 text-gray-600 border-transparent hover:bg-gray-200'
               }`}
             >
               Short Break
             </button>
             <button
               onClick={() => handleModeSwitch('longBreak')}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors duration-200 border-2 ${
                 pomodoroCycle.currentMode === 'longBreak'
-                  ? 'bg-blue-100 text-blue-700 border-2 border-blue-200'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  ? 'bg-blue-100 text-blue-700 border-blue-200'
+                  : 'bg-gray-100 text-gray-600 border-transparent hover:bg-gray-200'
               }`}
             >
               Long Break
@@ -224,6 +291,23 @@ function App() {
           </p>
         </div>
       </div>
+
+      {/* Settings Panel */}
+      <SettingsPanel
+        isOpen={isSettingsOpen}
+        settings={settings}
+        onClose={handleSettingsClose}
+        onUpdateSettings={updateSettings}
+        onResetToDefaults={resetToDefaults}
+      />
+
+      {/* Transition Overlay */}
+      <TransitionOverlay
+        isVisible={autoRollover.isInTransition}
+        secondsLeft={autoRollover.secondsLeft}
+        nextMode={nextMode}
+        onCancel={autoRollover.cancelTransition}
+      />
     </div>
   )
 }

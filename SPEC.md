@@ -41,18 +41,18 @@ Automatically switch between sessions and rollover to the next timer in the sequ
 - [x] Create basic UI layout with timer display
 
 ### Phase 2: Timer Functionality
-- [ ] Implement countdown timer logic
-- [ ] Add start/pause/reset controls
-- [ ] Create timer state management (work/short break/long break)
-- [ ] Implement cycle logic (4 work sessions → long break)
-- [ ] Add timer completion notifications
+- [x] Implement countdown timer logic
+- [x] Add start/pause/reset controls
+- [x] Create timer state management (work/short break/long break)
+- [x] Implement cycle logic (4 work sessions → long break)
+- [x] Add timer completion notifications
 
 ### Phase 3: Auto-Rollover & Settings
-- [ ] Implement 3-second delay between sessions
-- [ ] Add auto-start toggle functionality
-- [ ] Create settings panel for duration customization
-- [ ] Persist settings in localStorage
-- [ ] Add visual feedback for session transitions
+- [x] Implement 3-second delay between sessions
+- [x] Add auto-start toggle functionality
+- [x] Create settings panel for duration customization
+- [x] Persist settings in localStorage
+- [x] Add visual feedback for session transitions
 
 ### Phase 4: Polish & UX
 - [ ] Add progress indicators for current cycle
