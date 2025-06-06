@@ -117,6 +117,15 @@ function App() {
     }
   }, [settings.durations, pomodoroCycle.currentMode, pomodoroCycle.switchMode])
 
+  // Update timer when duration settings change for the current mode
+  useEffect(() => {
+    // Only update if timer is not running to avoid interrupting active sessions
+    if (!timer.isRunning) {
+      const newDuration = pomodoroCycle.getCurrentDuration()
+      timer.setTime(newDuration)
+    }
+  }, [settings.durations, pomodoroCycle.currentMode, pomodoroCycle.getCurrentDuration, timer.setTime, timer.isRunning])
+
   // Format time as MM:SS
   const formatTime = (seconds: number): string => {
     const mins = Math.floor(seconds / 60)
