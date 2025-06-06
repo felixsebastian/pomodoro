@@ -55,11 +55,11 @@ Automatically switch between sessions and rollover to the next timer in the sequ
 - [x] Add visual feedback for session transitions
 
 ### Phase 4: Polish & UX
-- [ ] Add progress indicators for current cycle
-- [ ] Implement visual/audio notifications
-- [ ] Add keyboard shortcuts (spacebar for start/pause)
-- [ ] Create responsive design for mobile
-- [ ] Add session history/statistics (optional)
+- [x] Add progress indicators for current cycle
+- [x] Implement visual/audio notifications
+- [x] Add keyboard shortcuts (spacebar for start/pause)
+- [x] Create responsive design for mobile
+- [x] Add session history/statistics (optional)
 
 ### Phase 5: Testing & Deployment
 - [ ] Write unit tests for timer logic
