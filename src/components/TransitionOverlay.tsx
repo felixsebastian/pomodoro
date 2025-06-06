@@ -98,7 +98,7 @@ export const TransitionOverlay = ({
             {config.message}
           </p>
           <p className="text-sm text-gray-500">
-            Session will start automatically in {secondsLeft} second{secondsLeft !== 1 ? 's' : ''}
+            Timer will start automatically in {secondsLeft} second{secondsLeft !== 1 ? 's' : ''}
           </p>
         </div>
 

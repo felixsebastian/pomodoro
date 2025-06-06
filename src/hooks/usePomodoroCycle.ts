@@ -57,17 +57,25 @@ export const usePomodoroCycle = ({
       const newSessionsCompleted = workSessionsCompleted + 1
       setWorkSessionsCompleted(newSessionsCompleted)
       
-      // After 4 work sessions, take a long break
+      // Determine what the next break should be
+      let nextBreakMode: TimerMode
       if (newSessionsCompleted % 4 === 0) {
-        switchMode('longBreak')
+        nextBreakMode = 'longBreak'
       } else {
-        switchMode('shortBreak')
+        nextBreakMode = 'shortBreak'
+      }
+      
+      // If the next break is disabled (duration is 0), skip directly to work
+      if (durations[nextBreakMode] === 0) {
+        switchMode('work')
+      } else {
+        switchMode(nextBreakMode)
       }
     } else {
       // Break is over, back to work
       switchMode('work')
     }
-  }, [currentMode, workSessionsCompleted, switchMode])
+  }, [currentMode, workSessionsCompleted, switchMode, durations])
 
   const resetCycle = useCallback(() => {
     setWorkSessionsCompleted(0)

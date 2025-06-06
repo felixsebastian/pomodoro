@@ -19,6 +19,7 @@ export const SettingsPanel = ({
   if (!isOpen) return null
 
   const formatDuration = (seconds: number): string => {
+    if (seconds === 0) return 'Disabled'
     const minutes = Math.floor(seconds / 60)
     return `${minutes} min`
   }
@@ -76,42 +77,42 @@ export const SettingsPanel = ({
               {/* Short Break Duration */}
               <div>
                 <div className="flex justify-between items-center mb-2">
-                  <label className="text-sm font-medium text-gray-700">
+                  <label className={`text-sm font-medium ${settings.durations.shortBreak === 0 ? 'text-gray-400' : 'text-gray-700'}`}>
                     Short Break
                   </label>
-                  <span className="text-sm text-gray-500">
+                  <span className={`text-sm ${settings.durations.shortBreak === 0 ? 'text-gray-400' : 'text-gray-500'}`}>
                     {formatDuration(settings.durations.shortBreak)}
                   </span>
                 </div>
                 <input
                   type="range"
-                  min="1"
+                  min="0"
                   max="15"
                   step="1"
                   value={settings.durations.shortBreak / 60}
                   onChange={(e) => handleDurationChange('shortBreak', parseInt(e.target.value))}
-                  className="w-full h-2 bg-green-200 rounded-lg appearance-none cursor-pointer slider-green"
+                  className={`w-full h-2 rounded-lg appearance-none cursor-pointer ${settings.durations.shortBreak === 0 ? 'bg-gray-300 slider-gray' : 'bg-green-200 slider-green'}`}
                 />
               </div>
 
               {/* Long Break Duration */}
               <div>
                 <div className="flex justify-between items-center mb-2">
-                  <label className="text-sm font-medium text-gray-700">
+                  <label className={`text-sm font-medium ${settings.durations.longBreak === 0 ? 'text-gray-400' : 'text-gray-700'}`}>
                     Long Break
                   </label>
-                  <span className="text-sm text-gray-500">
+                  <span className={`text-sm ${settings.durations.longBreak === 0 ? 'text-gray-400' : 'text-gray-500'}`}>
                     {formatDuration(settings.durations.longBreak)}
                   </span>
                 </div>
                 <input
                   type="range"
-                  min="10"
+                  min="0"
                   max="30"
                   step="5"
                   value={settings.durations.longBreak / 60}
                   onChange={(e) => handleDurationChange('longBreak', parseInt(e.target.value))}
-                  className="w-full h-2 bg-blue-200 rounded-lg appearance-none cursor-pointer slider-blue"
+                  className={`w-full h-2 rounded-lg appearance-none cursor-pointer ${settings.durations.longBreak === 0 ? 'bg-gray-300 slider-gray' : 'bg-blue-200 slider-blue'}`}
                 />
               </div>
             </div>
@@ -128,7 +129,7 @@ export const SettingsPanel = ({
                     Auto Start
                   </label>
                   <p className="text-xs text-gray-500 mt-1">
-                    Automatically start next session after 3s delay
+                    Automatically start next timer after 3s delay
                   </p>
                 </div>
                 <button

@@ -56,7 +56,14 @@ function App() {
       
       if (currentMode === 'work') {
         const nextSessionsCompleted = pomodoroCycle.workSessionsCompleted + 1
-        nextSessionMode = nextSessionsCompleted % 4 === 0 ? 'longBreak' : 'shortBreak'
+        const intendedBreakMode: TimerMode = nextSessionsCompleted % 4 === 0 ? 'longBreak' : 'shortBreak'
+        
+        // If the intended break is disabled (duration is 0), skip directly to work
+        if (settings.durations[intendedBreakMode] === 0) {
+          nextSessionMode = 'work'
+        } else {
+          nextSessionMode = intendedBreakMode
+        }
       } else {
         nextSessionMode = 'work'
       }
@@ -100,6 +107,15 @@ function App() {
     window.addEventListener('keydown', handleKeyPress)
     return () => window.removeEventListener('keydown', handleKeyPress)
   }, [timer.isRunning, isSettingsOpen, isStatsOpen, autoRollover.isInTransition])
+
+  // Auto-switch away from disabled break modes
+  useEffect(() => {
+    const currentMode = pomodoroCycle.currentMode
+    if ((currentMode === 'shortBreak' && settings.durations.shortBreak === 0) ||
+        (currentMode === 'longBreak' && settings.durations.longBreak === 0)) {
+      pomodoroCycle.switchMode('work')
+    }
+  }, [settings.durations, pomodoroCycle.currentMode, pomodoroCycle.switchMode])
 
   // Format time as MM:SS
   const formatTime = (seconds: number): string => {
@@ -187,7 +203,7 @@ function App() {
           <p className="text-gray-600 text-base sm:text-lg">Stay focused, stay productive</p>
           {settings.autoStart && (
             <p className="text-xs sm:text-sm text-gray-500 mt-1">
-              Auto-start enabled • Sessions will start automatically
+              Auto-start enabled • Timers will start automatically
             </p>
           )}
         </div>
@@ -320,20 +336,26 @@ function App() {
             </button>
             <button
               onClick={() => handleModeSwitch('shortBreak')}
+              disabled={settings.durations.shortBreak === 0}
               className={`px-2 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition-colors duration-200 border-2 ${
-                pomodoroCycle.currentMode === 'shortBreak'
-                  ? 'bg-green-100 text-green-700 border-green-200'
-                  : 'bg-gray-100 text-gray-600 border-transparent hover:bg-gray-200'
+                settings.durations.shortBreak === 0
+                  ? 'bg-gray-50 text-gray-400 border-gray-200 cursor-not-allowed'
+                  : pomodoroCycle.currentMode === 'shortBreak'
+                    ? 'bg-green-100 text-green-700 border-green-200'
+                    : 'bg-gray-100 text-gray-600 border-transparent hover:bg-gray-200'
               }`}
             >
               Short Break
             </button>
             <button
               onClick={() => handleModeSwitch('longBreak')}
+              disabled={settings.durations.longBreak === 0}
               className={`px-2 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition-colors duration-200 border-2 ${
-                pomodoroCycle.currentMode === 'longBreak'
-                  ? 'bg-blue-100 text-blue-700 border-blue-200'
-                  : 'bg-gray-100 text-gray-600 border-transparent hover:bg-gray-200'
+                settings.durations.longBreak === 0
+                  ? 'bg-gray-50 text-gray-400 border-gray-200 cursor-not-allowed'
+                  : pomodoroCycle.currentMode === 'longBreak'
+                    ? 'bg-blue-100 text-blue-700 border-blue-200'
+                    : 'bg-gray-100 text-gray-600 border-transparent hover:bg-gray-200'
               }`}
             >
               Long Break
